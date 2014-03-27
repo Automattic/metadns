@@ -1,0 +1,24 @@
+{
+	"auth_token": "<auth token string>",
+
+	"master_db": [
+		{
+			"name"    : "Human readable (friendly) name of metadns webserver",
+			"host"    : "<SSL host>",
+			"port"    : <SSL Port>
+		}
+	],
+
+	"peer": [
+		{
+			"name"    : "MetaDNS Monitor 1",
+			"host"    : "<peer host>",
+			"port"    : <Peer Intercomms Port>
+		},
+		{
+			"name"    : "MetaDNS Monitor 2",
+			"host"    : "<peer host>",
+			"port"    : <Peer Intercomms Port>
+		}
+	]
+}
