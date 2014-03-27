@@ -1,0 +1,13 @@
+{
+	"name": "Watcher.JS",
+	"author": "David Newman <dnewman@automattic.com>",
+	"description": "MetaDNS Health Monitoring",
+	"version": "0.0.1",
+	"main": "./lib/watcher.js",
+	"engines": {
+		"node": ">= 0.10.13"
+	},
+	"dependencies": {
+    		"log4js": ">=0.6.0"
+  	}
+}
