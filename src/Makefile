@@ -7,7 +7,7 @@ SRC_DIR=src
 
 CC=g++
 CFLAGS= -I $(PATH_TO_PDNS) -I /usr/include/mysql/ -O3 -Wall -fPIC -c -std=c++11 -DBIG_JOINS=1 -fno-strict-aliasing
-LDFLAGS=-lmysqlclient_r -lpthread -lz -lm -lrt -ldl libwpmetabackend.so.0 -shared
+LDFLAGS=-lmysqlclient_r -lpthread -lz -lm -lrt -ldl -shared
 SOURCES= wpmetabackend.cc database.cc \
 		hashring.cc hashcache.cc \
 		crc32.cc pool.cc poolcache.cc
