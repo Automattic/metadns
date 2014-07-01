@@ -29,6 +29,7 @@ public:
 	int query( const std::string &s_query );
 	bool get_row( row_t &row );
 
+	bool is_connected() { return m_connected; }
 	bool connect();
 	void disconnect();
 
@@ -45,6 +46,8 @@ private:
 	std::string m_socket;
 	std::string m_user;
 	std::string m_password;
+
+	bool m_connected;
 };
 
 #endif	// __DATABASE_HH__
