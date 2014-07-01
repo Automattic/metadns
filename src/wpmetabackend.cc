@@ -35,12 +35,12 @@ WPMetaBackend::WPMetaBackend( const string &suffix ) : m_qname( "" ), m_origin( 
 
 		m_random.seed( std::chrono::system_clock::to_time_t( std::chrono::system_clock::now() ) );
 		m_random.seed( std::hash<std::thread::id>()( std::this_thread::get_id() ) );
+		L << Logger::Debug << backend_name << ": creation successful." << endl;
 	}
 	catch ( std::exception &ex ) {
 		L << Logger::Error << backend_name << " Connection failed: " << ex.what() << endl;
 		throw AhuException( backend_name + "Failed to create the Database object: " + ex.what() );
 	}
-	L << Logger::Error << backend_name << ": creation successful." << endl;
 }
 
 WPMetaBackend::~WPMetaBackend() {
@@ -49,7 +49,13 @@ WPMetaBackend::~WPMetaBackend() {
 
 int WPMetaBackend::query_db( const string& p_sql ) {
 	try {
-		return ( m_db->query( p_sql ) );
+		if ( ! m_db->is_connected() )
+			if ( m_db->connect() )
+				return ( m_db->query( p_sql ) );
+			else
+				throw AhuException( "Unable to connect to the database" );
+		else
+			return ( m_db->query( p_sql ) );
 	} catch ( std::exception &ex ) {
 		throw AhuException( ex.what() );
 	}
@@ -57,7 +63,13 @@ int WPMetaBackend::query_db( const string& p_sql ) {
 
 int WPMetaBackend::query_db( const string& p_sql, Database::result_t& result ) {
 	try {
-		return ( m_db->query( p_sql, result ) );
+		if ( ! m_db->is_connected() )
+			if ( m_db->connect() )
+				return ( m_db->query( p_sql, result ) );
+			else
+				throw AhuException( "Unable to connect to the database" );
+		else
+			return ( m_db->query( p_sql, result ) );
 	} catch ( std::exception &ex ) {
 		throw AhuException( ex.what() );
 	}
