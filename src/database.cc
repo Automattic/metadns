@@ -6,7 +6,7 @@ using namespace std;
 pthread_mutex_t Database::connect_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 Database::Database( const string &p_database, const string &p_host, uint16_t p_port, const string &p_socket,
-					const string &p_user, const string &p_password ) : m_results( NULL ) {
+					const string &p_user, const string &p_password ) : m_results( NULL ), m_connected( false ) {
 	m_host = p_host;
 	m_user = p_user;
 	m_password = p_password;
@@ -21,17 +21,17 @@ Database::~Database() {
 }
 
 bool Database::connect() {
-	pthread_mutex_lock(&connect_mutex);
+	pthread_mutex_lock( &connect_mutex );
 	if ( mysql_library_init( 0, NULL, NULL ) ) {
+		pthread_mutex_unlock( &connect_mutex );
 		throw AhuException( "Unable to initialise the MySQL library" );
-		return false;
 	}
 
 	mysql_init( &m_conn );
 
 	if ( NULL == &m_conn ) {
+		pthread_mutex_unlock( &connect_mutex );
 		throw AhuException( "Unable to initialise the MySQL connection object" );
-		return false;
 	}
 
 	my_bool reconnect = 1;
@@ -41,21 +41,27 @@ bool Database::connect() {
 	mysql_options( &m_conn, MYSQL_OPT_READ_TIMEOUT, &conn_timeout );
 	mysql_options( &m_conn, MYSQL_OPT_WRITE_TIMEOUT, &conn_timeout );
 
-	if ( NULL == mysql_real_connect(&m_conn, m_host.empty() ? NULL : m_host.c_str(),
-								  m_user.empty() ? NULL : m_user.c_str(),
-								  m_password.empty() ? NULL : m_password.c_str(),
-								  m_database.empty() ? NULL : m_database.c_str(),
-								  m_port,
-								  m_socket.empty() ? NULL : m_socket.c_str(),
-								  CLIENT_MULTI_RESULTS) ) {
-		throw AhuException( "Unable to connect to the database" );
+	if ( NULL == mysql_real_connect( &m_conn, m_host.empty() ? NULL : m_host.c_str(),
+									m_user.empty() ? NULL : m_user.c_str(),
+									m_password.empty() ? NULL : m_password.c_str(),
+									m_database.empty() ? NULL : m_database.c_str(),
+									m_port,
+									m_socket.empty() ? NULL : m_socket.c_str(),
+									CLIENT_MULTI_RESULTS) ) {
+		m_connected = false;
+	} else {
+		m_connected = true;
 	}
+
 	pthread_mutex_unlock( &connect_mutex );
-	return true;
+	return m_connected;
 }
 
 void Database::disconnect() {
-	mysql_close( &m_conn );
+	if ( m_connected ) {
+		mysql_close( &m_conn );
+		m_connected = false;
+	}
 }
 
 int Database::query( const string &s_query ) {
@@ -63,9 +69,10 @@ int Database::query( const string &s_query ) {
 		throw AhuException( "Unable to start a new query, as there are still un-collected records." );
 
 	int err;
-	if ( ( err = mysql_query( &m_conn, s_query.c_str() ) ) )
+	if ( ( err = mysql_query( &m_conn, s_query.c_str() ) ) ) {
+		this->disconnect();
 		throw AhuException( "call to mysql_query failed: " + std::to_string( err ) );
-
+	}
 	return 0;
 }
 
